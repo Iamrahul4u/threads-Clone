@@ -18,9 +18,11 @@ import { Textarea } from "../ui/textarea";
 import { useUploadThing } from "@/lib/uploadthing";
 
 import { isBase64Image } from "@/lib/utils";
+import { updateUser } from "@/lib/actions/user.actions";
+import { usePathname, useRouter } from "next/navigation";
 interface AccountFormProps {
   user: {
-    id: number;
+    id: string;
     objectId: string;
     username: string;
     name: string;
@@ -32,6 +34,10 @@ interface AccountFormProps {
 const AccountForm = ({ user, btntitle }: AccountFormProps) => {
   const [File, SetFile] = useState<File[]>([]);
   const { startUpload } = useUploadThing("media");
+
+  const router = useRouter();
+  const pathname = usePathname();
+
   const form = useForm({
     resolver: zodResolver(UserValidation),
     defaultValues: {
@@ -66,6 +72,20 @@ const AccountForm = ({ user, btntitle }: AccountFormProps) => {
         values.profile_photo = imgres[0].url;
       }
     }
+    await updateUser({
+      userId: user.id,
+      name: values.name,
+      username: values.username,
+      bio: values.bio,
+      image: values.profile_photo,
+      path: pathname,
+    });
+    if (pathname === "/profile/edit") {
+      router.back();
+    } else {
+      router.refresh();
+      // router.push("/");
+    }
   }
   return (
     <Form {...form}>
@@ -82,6 +102,7 @@ const AccountForm = ({ user, btntitle }: AccountFormProps) => {
                     alt="profile-image"
                     height={96}
                     width={96}
+                    priority
                     className="rounded-full object-contain"
                   />
                 ) : (
